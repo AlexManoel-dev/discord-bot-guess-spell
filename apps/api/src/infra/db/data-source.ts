@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
+  host: "database",
   port: 5432,
   username: "admin",
   password: "123mudar",
@@ -11,7 +11,7 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   logging: true,
   entities: [
-    join(`${__dirname}'../../modules/**/infra/typeorm/entities/*.entity{.ts}'`)
+    join(__dirname, '../../modules/**/infra/typeorm/entities/*.entity.ts')
   ],
   subscribers: [],
   migrations: [
