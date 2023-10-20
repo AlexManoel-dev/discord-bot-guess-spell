@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, Collection, EmbedBuilder, Message } from 'discord.js';
 import { Command } from '../../structs/types/Command';
 import { request } from 'undici';
+import axios from 'axios';
 
 const abilities: { [key: number]: string; } = {
   0: 'Q',
@@ -24,6 +25,17 @@ export default new Command({
     if(!interaction.inCachedGuild()) return;
 
     const { member, channel } = interaction;
+
+    axios({
+      method: 'post',
+      url: 'http://api:3333/users',
+      data: {
+        name: member.user.globalName,
+        discordId: member.user.username
+      }
+    }).then(() => {
+      console.log('OK');
+    }).catch((error) => console.log('Erro: ' + error));
 
     currentMemberToButton = member.user.username;
 
@@ -69,15 +81,36 @@ export default new Command({
       .setTitle('Desafio!')
       .setDescription('De qual campeão é essa habilidade?');
 
-    interaction.reply({ embeds: [spellImage] });
+    const counterEmbed = new EmbedBuilder().setTitle('3');
+    await interaction.reply({ embeds: [counterEmbed] });
+
+    // Se for precisar de setTimeout
+    // for (let index = 3; index > 0; index--) {
+    //   setTimeout(() => {
+    //     counterEmbed.setTitle(`${index}`);
+    //     interaction.editReply({ embeds: [counterEmbed] });
+
+    //     if(index === 1) {
+    //       interaction.editReply({ embeds: [spellImage] });
+    //     }
+    //   }, 1000);
+    // }
+    
+    for (let index = 3; index > 0; index--) {
+      counterEmbed.setTitle(`${index}`);
+      interaction.editReply({ embeds: [counterEmbed] });
+    }
+
+    interaction.editReply({ embeds: [spellImage] });
 
     // Log to know champion and ability to test
     console.log(randomChampion.id, currentAbility);
 
     // Filtra somente as mensagens de quem chamou o comando
-    const filter = (m: Message) => m.author.id === member.id;
+    // const filter = (m: Message) => m.author.id === member.id;
 
-    const message = await channel?.awaitMessages({ filter, max: 1 }).catch(() => null);
+    // const message = await channel?.awaitMessages({ filter, max: 1 }).catch(() => null);
+    const message = await channel?.awaitMessages({ max: 1 }).catch(() => null);
     const msg = message?.first();
     const messageToCompare = msg?.content.replace("'", '').replace(".", '').replaceAll(" ", '').trim().toLowerCase();
 
@@ -108,20 +141,39 @@ export default new Command({
       channel?.send({
         embeds: [congratsEmbed],
         components: [row]
-      }).then(async () => {
-        const message = await channel?.awaitMessages({ filter, max: 1 }).catch(() => null);
-        const msg = message?.first();
-
-        if(msg?.content.toLowerCase() === currentAbility.toLocaleLowerCase()) {
-          channel.send({
-            embeds: [finalCongratsEmbed]
-          });
-        } else {
-          channel.send({
-            embeds: [wrongEmbed]
-          });
+      })
+      axios({
+        method: 'post',
+        url: 'http://api:3333/users',
+        data: {
+          name: msg?.author.username,
+          discordId: member.user.username
         }
-      });
+      }).then(() => {
+        axios({
+          method: 'put',
+          url: 'http://api:3333/users/add-points',
+          data: {
+            discordId: msg?.author.username
+          }
+        }).then(() => {
+          console.log('OK');
+        }).catch((error) => console.log('Erro: ' + error));
+      }).catch((error) => console.log('Erro: ' + error));
+      // .then(async () => {
+      //   const message = await channel?.awaitMessages({ filter, max: 1 }).catch(() => null);
+      //   const msg = message?.first();
+
+      //   if(msg?.content.toLowerCase() === currentAbility.toLocaleLowerCase()) {
+      //     channel.send({
+      //       embeds: [finalCongratsEmbed]
+      //     });
+      //   } else {
+      //     channel.send({
+      //       embeds: [wrongEmbed]
+      //     });
+      //   }
+      // });
     } else {
       channel?.send({
         embeds: [wrongEmbed]

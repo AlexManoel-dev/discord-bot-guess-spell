@@ -23,14 +23,29 @@ class UsersRepository implements IUsersRepository {
     return user;
   }
 
+  async listBetterUsers(): Promise<User[]> {
+    const users = await this.repository.find({
+      order: {
+        points: 'DESC'
+      }
+    }); 
+
+    return users;
+  }
+
   async findByDiscordId(discordId: string): Promise<User | null> {
     const user = await this.repository.findOne({ where: { discordId } });
 
     return user;
   }
 
-  addPointsToUser(discordId: string): Promise<any> {
-    throw new Error('Method not implemented.');
+  async addPointsToUser(discordId: string): Promise<void> {
+    const user = await this.findByDiscordId(discordId) as User;
+
+    await this.repository.update(user.id, {
+      ...user,
+      points: user.points + 10
+    });
   }
 }
 

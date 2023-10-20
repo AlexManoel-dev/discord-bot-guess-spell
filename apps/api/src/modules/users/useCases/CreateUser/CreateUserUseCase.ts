@@ -27,7 +27,6 @@ class CreateUserUseCase {
       discordId,
       points: 0
     });
-    console.log('salve fi');
 
     return user;
   }
